@@ -3,7 +3,10 @@ const http = require('http');
 const express = require('express');
 const socketIO = require('socket.io');
 
-const {generateMessage} = require('./utils/message');
+const {
+  generateMessage,
+  generateLocationMessage
+} = require('./utils/message');
 const port = process.env.PORT || 3000;
 var app = express();
 var server = http.createServer(app);
@@ -13,7 +16,6 @@ app.use(express.static(path.join(__dirname,'../public')));
 
 io.on('connection', (socket) => {
   console.log('New user connected');
-
   socket.emit('newMessage',generateMessage(
     'Admin',
     'Welcome to the chat app'
@@ -31,13 +33,15 @@ io.on('connection', (socket) => {
       newMessage.text
     ));
     callback('This is from the server');
-    //everyone but this socket is what broadcast does
-    // socket.broadcast.emit('newMessage',{
-    //   from:newMessage.from,
-    //   text:newMessage.text,
-    //   createdAt:new Date().getTime()
-    // });
   })
+
+  socket.on('createLocationMessage',(coords)=>{
+    io.emit("newLocationMessage",generateLocationMessage(
+      'Admin: ',
+      coords.latitude,
+      coords.longitude
+    ));
+  });
 
   socket.on('disconnect', () => {
     console.log('Client disconnected');
